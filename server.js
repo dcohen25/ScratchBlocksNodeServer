@@ -8,7 +8,7 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: false })); // tell Express to parse request bodies containing application/x-www-form-urlencoded content
 
 function IFTTT(){
-  
+
   var post = function(url){
     request.post(
       url,
@@ -180,6 +180,7 @@ app.get('*', function(req, res){
 });
 
 // listen for connection on port 8080 at domain localhost
-app.listen(8080, function(){
-	console.log("Listening on port 8080 ");
+var port = process.env.PORT || 8080;
+app.listen(port, function(){
+	console.log("Listening on port " + port);
 });
