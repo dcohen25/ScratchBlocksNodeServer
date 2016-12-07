@@ -7,32 +7,56 @@ var express = require('express'),
 var app = express();
 app.use(bodyParser.urlencoded({ extended: false })); // tell Express to parse request bodies containing application/x-www-form-urlencoded content
 
-var post = function(url){
-  request.post(
-    url,
-  function (error, response, body) {
-      if (!error && response.statusCode == 200) {
-          console.log(body)
+function IFTTT(){
+  
+  var post = function(url){
+    request.post(
+      url,
+    function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            console.log(body)
+        }
+    });
+  }
+
+  // Add methods like this.  All Person objects will be able to invoke this
+  var text = function(){
+    post('https://maker.ifttt.com/trigger/text/with/key/oF1EehoMeGrVxDnKW6XQwRqyMOim6K0sCUgTvfmvYC4');
+  }
+
+  // Add methods like this.  All Person objects will be able to invoke this
+  var email = function(){
+    post('https://maker.ifttt.com/trigger/email/with/key/oF1EehoMeGrVxDnKW6XQwRqyMOim6K0sCUgTvfmvYC4');
+  }
+
+  var call = function(){
+    post('https://maker.ifttt.com/trigger/callwith/key/oF1EehoMeGrVxDnKW6XQwRqyMOim6K0sCUgTvfmvYC4');
+  }
+
+  var tweet = function(){
+    post('https://maker.ifttt.com/trigger/tweet/with/key/oF1EehoMeGrVxDnKW6XQwRqyMOim6K0sCUgTvfmvYC4');
+  } 
+
+  this.execute = function(commands){
+    for (var i = 0; i < commands.length; i++){
+      switch (commands[i]){
+        case "text" :
+          text();
+          break;
+        case "email" :
+          email();
+          break;
+        case "call" :
+          call();
+          break;
+        case "tweet" :
+          tweet();
+          break;
+        default :
+          break;
       }
-  });
-}
-
-// Add methods like this.  All Person objects will be able to invoke this
-var text = function(){
-  post('https://maker.ifttt.com/trigger/text/with/key/oF1EehoMeGrVxDnKW6XQwRqyMOim6K0sCUgTvfmvYC4');
-}
-
-// Add methods like this.  All Person objects will be able to invoke this
-var email = function(){
-  post('https://maker.ifttt.com/trigger/email/with/key/oF1EehoMeGrVxDnKW6XQwRqyMOim6K0sCUgTvfmvYC4');
-}
-
-var call = function(){
-  post('https://maker.ifttt.com/trigger/callwith/key/oF1EehoMeGrVxDnKW6XQwRqyMOim6K0sCUgTvfmvYC4');
-}
-
-var tweet = function(){
-  post('https://maker.ifttt.com/trigger/tweet/with/key/oF1EehoMeGrVxDnKW6XQwRqyMOim6K0sCUgTvfmvYC4');
+    }
+  }
 }
 
 // Define a class like this
@@ -68,35 +92,59 @@ function Sphero(){
     }
   });
 
-  this.left = function(){
+  this.execute = function(commands){
+    for (var i = 0; i < commands.length; i++){
+      switch (commands[i]){
+        case "left" :
+          left();
+          break;
+        case "right" :
+          right();
+          break;
+        case "forward" :
+          forward();
+          break;
+        case "backward" :
+          backward();
+          break;
+        case "stop" :
+          stop();
+          break;
+        default :
+          break;
+      }
+    }
+  }
+
+  var left = function(){
     command = "left";
     sphero.start();
   }
 
-  this.right = function(){
+  var right = function(){
     command = "right";
     sphero.start();
   }
 
-  this.forward = function(){
+  var forward = function(){
     command = "forward";
     sphero.start();
   }
 
-  this.backward = function(){
+  var backward = function(){
     command = "backward";
     sphero.start();
   }
 
-  this.stop = function(){
+  var stop = function(){
     command = "stop";
     sphero.start();
   }
 }
 
-var getDevice = function(deviceID){
+var getDevice = function(deviceName){
   var device;
-  switch (deviceID){
+  switch (deviceName){
     case "ardrone" :
       device = new ARDrone();
       break;
@@ -109,55 +157,29 @@ var getDevice = function(deviceID){
     case "rccar" : 
       device = new RCCar();
       break;
-    default: 
-      device = null;
+    case "ifttt" :
+      device = new IFTTT();
+    default:
       break;
   }
   return device;
 }
 
-var runDevice = function(device, commands){
-  for (var i = 0; i < commands.length; i++){
-    switch (commands[i]){
-      case "forward" :
-        device.forward();
-        break;
-      case "backward":
-        device.backward();
-        break;
-      case "left":
-        device.left();
-        break;
-      case "right" :
-        device.right();
-        break;
-      case "stop" :
-        device.stop();
-        break;
-      case "text" :
-        text();
-        break;
-      case "email" :
-        email();
-        break;
-      case "call" :
-        call();
-        break;
-      case "tweet" :
-        tweet();
-        break;
-    }
-  }
-}
-
 // process scratch request
-app.post('/', function (req, res){
+app.post('/uploadProgram', function (req, res){
   var data = JSON.parse(req.body.data);
   var device = getDevice(data.device);
-  runDevice(device, data.commands);
+  device.execute(data.commands);
+  res.writeHead(200, {"Content-Type": "text/html"});
+  res.end("Scratchblocks Server:  Post request processed.");
+});
+
+app.get('*', function(req, res){
+  res.writeHead(200, {"Content-Type": "text/html"});
+  res.end("Scratchblocks Server");
 });
 
 // listen for connection on port 8080 at domain localhost
 app.listen(8080, function(){
-	console.log("Listening on port 8080");
+	console.log("Listening on port 8080 ");
 });
